@@ -1,0 +1,40 @@
+function hebrew_char_codes = asciiToUnicodeHebrew(ascii_codes)
+    hebrew_char_codes = NaN(1, length(ascii_codes));
+    for code_i = 1:length(ascii_codes)
+        switch(ascii_codes(code_i))
+            case 45
+            case 48
+                
+            case 49 || 35
+                %1
+                hebrew_char_code = 1;
+            case 50 || 40
+                %2
+                hebrew_char_code = 2;
+            case 51 || 34
+                %3
+                hebrew_char_code = 3;
+            case 52 || 37
+                %4
+                hebrew_char_code = 4;
+            case 53 || 12
+                %5
+                hebrew_char_code = 5;
+            case 54 || 39
+                %6
+                hebrew_char_code = 6;
+            case 55 || 36
+                %7
+                hebrew_char_code = 7;
+            case 56 || 38
+                %8
+                hebrew_char_code = 8;
+            case 57 || 33
+                %9
+                hebrew_char_code = 9;
+            otherwise
+                hebrew_char_code = -1;                                                                                                                                                                                                 
+        end
+        hebrew_char_codes(code_i) = hebrew_char_code;
+    end
+end
