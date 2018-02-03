@@ -118,7 +118,8 @@ ESC = 9;
 NUMBER_OF_BLOCKS = 2;
 BLOCKS_NR = NUMBER_OF_BLOCKS;
 PATH_TO_PICS = char('resources\pics\');
-NUMBER_OF_PICS = 60; 
+NUMBER_OF_PICS = 6;
+
 NUMBER_OF_TRIALS_PER_BLOCK = 5;
 
 %experiment's parameters definitions - not included in the gui
@@ -183,9 +184,10 @@ TRIGGERS_FIXATION_BROKEN= 200;
 TRIGGERS_START_TRAIL = 1;
 TRIGGERS_SHOWING_PICTURE = 2;
 TRIGGERS_PRESSING_KEYBOARD = 3;
+TRIGGERS_END_TRIAL = 4;
 TRIGGERS_ESC_PRESSED = 10;
 TRIGGERS_INVALID_KEYBOARD_PRESSED = 11;
-TRIGGERS_END_TRIAL = 4;
+
 
 %is the experiment supposed to be running? (this flag is assigned a false
 %value when the experiment is aborted, for instance by pressing esc and the 'y' key)
@@ -494,7 +496,7 @@ function runExp()
             EXPDATA.trials(trial_i).trial_number = [];                
             EXPDATA.trials(trial_i). trial_duration= [];
             EXPDATA.trials(trial_i).response = [];
-            EXPDATA.trials(trial_i).left_pi1cture_rank = [];
+            EXPDATA.trials(trial_i).left_picture_rank = [];
             EXPDATA.trials(trial_i).right_picture_rank = [];
             
         end
@@ -581,12 +583,16 @@ function runExp()
                 trial_vector= [conditions_mat(trial_overall_i,:),block_i];
                 [trial_start_vbl, trial_end_vbl,subject_response, LeftPicRank, RightPicRank] = runTrial(trial_vector);
                 EXPDATA.trials(trial_overall_i).response = subject_response;
-                EXPDATA.trials(trial_overall_i).left_pi1cture_rank = LeftPicRank;
+                disp('in run block');
+                disp(LeftPicRank);
+                disp(RightPicRank);
+                EXPDATA.trials(trial_overall_i).left_picture_rank = LeftPicRank;
                 EXPDATA.trials(trial_overall_i).right_picture_rank = RightPicRank;
                 EXPDATA.trials(trial_overall_i).trial_duration = trial_end_vbl-trial_start_vbl;
                 total_experiment_pauses_duration= total_experiment_pauses_duration + curr_trial_pause_duration;
                 if (~IS_EXP_GO)
-                    EXPDATA.info.general_info.experiment_duration= trial_end_vbl - exp_start_vbl;
+                    EXPDATA.info.general_info.experiment_
+                    duration= trial_end_vbl - exp_start_vbl;
                     break;
                 end
                 EXPDATA.trials(trial_overall_i).trial_duration= trial_end_vbl - trial_start_vbl;
@@ -653,6 +659,9 @@ function runExp()
                     pressed_key_code = find(keyCode, 1);
                     if blockNum ~= 1 && (pressed_key_code ~= KBOARD_CODE_ESC)
                         [LeftPicRank, RightPicRank] = getRankFromUser(window, FIXATION_CROSS_COLOR, msgs);
+                        disp('in run trial');
+                        disp(LeftPicRank);
+                        disp(RightPicRank);
                         subject_response = -1;
                         sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
                         sendTrigger(TRIGGERS_END_TRIAL);
@@ -938,6 +947,7 @@ function runExp()
             fprintf('\nCould not open device at wanted playback frequency of %i Hz. Will retry with device default frequency.\n', snd_freq);
             fprintf('Sound may sound a bit out of tune, ...\n\n');
             psychlasterror('reset');
+            
             ppa_handle = PsychPortAudio('Open', [], [], 0, [], chans_nr);
         end
                      
@@ -945,19 +955,12 @@ function runExp()
     end
     
     function [LeftPicRank, RightPicRank] = getRankFromUser(window, FIXATION_CROSS_COLOR, msgs)
-%         if KBOARD_CODE == KBOARD_CODE_LEFT
-%             text1 = 'What is the your rank (1-10) of the picture you chose?';
-%             text2 = 'What is the your rank (1-10) of the picture you did not chose?';
-%         elseif KBOARD_CODE == KBOARD_CODE_RIGHT
-%             text1 = 'What is the your rank (1-10) of the picture you chose?';
-%             text2 = 'What is the your rank (1-10) of the picture you did not chose?'; 
-%         end 
         if strcmp(START_WITH,'left')         
-            text2 = 'What is the your rank (1-10) of the right picture?';
-            text1 = 'What is the your rank (1-10) of the left picture?';
+            text2 = 'What is the your rank (1-9) of the right picture?';
+            text1 = 'What is the your rank (1-9) of the left picture?';
             while 1
                 LeftPicRank = displayInputDlgScreen(window, [100 100], text1, FIXATION_CROSS_COLOR); 
-                if ((LeftPicRank == -1) | (length(LeftPicRank) == 1 && (LeftPicRank(1) < 0)) | ((length(LeftPicRank) == 2 & (LeftPicRank(1) ~= 1 || LeftPicRank(2) ~= 0))))
+                if ((isempty(LeftPicRank)) | (LeftPicRank == -1) | (length(LeftPicRank) == 1 && (LeftPicRank(1) <= 0)) | (length(LeftPicRank) >= 2))
                     drawImageInstructions(msgs{NUMBER_OF_MSG_INVALID_KEY_FOR_RANK_TYPED});
                     KbWait([],2);
                 else
@@ -966,7 +969,7 @@ function runExp()
             end
             while 1
                 RightPicRank = displayInputDlgScreen(window, [100 100],text2, FIXATION_CROSS_COLOR);                         
-                if ((RightPicRank == -1) | (length(RightPicRank) == 1 && (RightPicRank(1) < 0)) | ((length(RightPicRank) == 2 & (RightPicRank(1) ~= 1 || RightPicRank(2) ~= 0))))
+                if ((isempty(RightPicRank)) | (RightPicRank == -1) | (length(RightPicRank) == 1 && (RightPicRank(1) <= 0)) | (length(RightPicRank) >= 2))
                     drawImageInstructions(msgs{NUMBER_OF_MSG_INVALID_KEY_FOR_RANK_TYPED});
                     KbWait([],2);
                     
@@ -975,11 +978,11 @@ function runExp()
                 end
             end
         else
-             text1 = 'What is the your rank (1-10) of the right picture?';
-             text2 = 'What is the your rank (1-10) of the left picture?';
+             text1 = 'What is the your rank (1-9) of the right picture?';
+             text2 = 'What is the your rank (1-9) of the left picture?';
              while 1
                 RightPicRank = displayInputDlgScreen(window, [100 100], text1, FIXATION_CROSS_COLOR); 
-                if ((RightPicRank == -1) | (length(RightPicRank) == 1 && (RightPicRank(1) < 0)) | ((length(RightPicRank) == 2 & (RightPicRank(1) ~= 1 || RightPicRank(2) ~= 0))))
+                if ((isempty(RightPicRank)) | (RightPicRank == -1) | (length(RightPicRank) == 1 && (RightPicRank(1) <= 0)) | (length(RightPicRank) >= 2))
                     drawImageInstructions(msgs{NUMBER_OF_MSG_INVALID_KEY_FOR_RANK_TYPED});
                     KbWait([],2);
                 else
@@ -988,19 +991,14 @@ function runExp()
             end
             while 1
                 LeftPicRank = displayInputDlgScreen(window, [100 100],text2, FIXATION_CROSS_COLOR);                         
-                if ((LeftPicRank == -1) | (length(LeftPicRank) == 1 && (LeftPicRank(1) < 0)) | ((length(LeftPicRank) == 2 & (LeftPicRank(1) ~= 1 || LeftPicRank(2) ~= 0))))
+                if ((isempty(LeftPicRank)) | (LeftPicRank == -1) | (length(LeftPicRank) == 1 && (LeftPicRank(1) <= 0)) | (length(LeftPicRank) >= 2))
                     drawImageInstructions(msgs{NUMBER_OF_MSG_INVALID_KEY_FOR_RANK_TYPED});
                     KbWait([],2);
                 else
                     break;
                 end
             end
-        end
-
-%        if KBOARD_CODE == KBOARD_CODE_LEFT || KBOARD_CODE == KBOARD_CODE_DOWN
-            
-
-            
+        end         
     end
     
 
