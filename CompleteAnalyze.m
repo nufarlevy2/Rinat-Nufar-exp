@@ -94,9 +94,9 @@ function CompleteAnalyze()
         end
         
         analysis_struct{1, 1}.c2.fixations(i).left_pic_duration_per_fixastion = lookLeftDurations;
-        analysis_struct{1, 1}.c2.fixations(i).left_pic_duration_sum = sum(lookLeftDurations);
+        analysis_struct{1, 1}.c2.fixations(i).left_pic_duration_sum = sum(lookLeftDurations(:,2));
         analysis_struct{1, 1}.c2.fixations(i).right_pic_duration_per_fixastion = lookRightDurations;
-        analysis_struct{1, 1}.c2.fixations(i).right_pic_duration_sum = sum(lookRightDurations);
+        analysis_struct{1, 1}.c2.fixations(i).right_pic_duration_sum = sum(lookRightDurations(:,2));
         
         %duration predicted response%
         if i > 50
