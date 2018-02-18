@@ -1,4 +1,4 @@
-%TODO: fix bug in ExperimentGuiBuilder::readMultipleNums - if changing
+ %TODO: fix bug in ExperimentGuiBuilder::readMultipleNums - if changing
 %number of requested numbers, then crash.
 
 function template1()
@@ -6,7 +6,8 @@ function template1()
 % This function is a framework for building experiments for psychtoolbox.
 % Three main sections:
 %
-% # Experiment Definitions
+% # Experi
+ment Definitions
 % # GUI
 %10 # Experiment function - called via the gui's [run experiment] button.
 %

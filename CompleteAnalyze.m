@@ -11,7 +11,8 @@ function CompleteAnalyze()
     catch
         disp('could not open file');
     end
-    for i = 1:100
+    endTrialsIndex = length(analysis_struct{1, 1}.c2.fixations(1,:));
+    for i = 1:endTrialsIndex
         %response%
         if EXPDATA.trials(i).response == 0
             analysis_struct{1, 1}.c2.fixations(i).response = 'Left';
@@ -74,10 +75,16 @@ function CompleteAnalyze()
         picLeftRangeX = [200,760];
         picRightRangeX = [1150,1710];
         picsRangeY = [100,940];
+        picsRangeEyesY = [250,450];
         lookLeftDurations = zeros([],2);
         lookRightDurations = zeros([],2);
         indexLeft = 1;
         indexRight = 1;
+        lookLeftEyesDurations = zeros([],2);
+        lookRightEyesDurations = zeros([],2);
+        indexEyesLeft = 1;
+        indexEyesRight = 1;
+        
         for intI = 1:length(myAvarage(:,1))
             %checking left picture fixation
             if ((myAvarage(intI,1) >= picLeftRangeX(1)) && (myAvarage(intI,1) <= picLeftRangeX(2)) && ...
@@ -91,12 +98,28 @@ function CompleteAnalyze()
                 lookRightDurations(indexRight,2) = analysis_struct{1, 1}.c2.fixations(i).fixations_durations(intI);
                 indexRight = indexRight + 1;
             end
+            if ((myAvarage(intI,1) >= picLeftRangeX(1)) && (myAvarage(intI,1) <= picLeftRangeX(2)) && ...
+                    (myAvarage(intI,2) >= picsRangeEyesY(1)) && (myAvarage(intI,2) <= picsRangeEyesY(2)))
+                lookLeftEyesDurations(indexEyesLeft,1) = analysis_struct{1, 1}.c2.fixations(i).fixations_onsets(intI);
+                lookLeftEyesDurations(indexEyesLeft,2) = analysis_struct{1, 1}.c2.fixations(i).fixations_durations(intI);
+                indexEyesLeft = indexEyesLeft + 1;
+            elseif ((myAvarage(intI,1) >= picRightRangeX(1)) && (myAvarage(intI,1) <= picRightRangeX(2)) && ...
+                    (myAvarage(intI,2) >= picsRangeEyesY(1)) && (myAvarage(intI,2) <= picsRangeEyesY(2)))
+                lookRightEyesDurations(indexEyesRight,1) = analysis_struct{1, 1}.c2.fixations(i).fixations_onsets(intI);
+                lookRightEyesDurations(indexEyesRight,2) = analysis_struct{1, 1}.c2.fixations(i).fixations_durations(intI);
+                indexEyesRight = indexEyesRight + 1;
+            end
         end
-        
+        %pic%
         analysis_struct{1, 1}.c2.fixations(i).left_pic_duration_per_fixastion = lookLeftDurations;
         analysis_struct{1, 1}.c2.fixations(i).left_pic_duration_sum = sum(lookLeftDurations(:,2));
         analysis_struct{1, 1}.c2.fixations(i).right_pic_duration_per_fixastion = lookRightDurations;
         analysis_struct{1, 1}.c2.fixations(i).right_pic_duration_sum = sum(lookRightDurations(:,2));
+        %eyes%
+        analysis_struct{1, 1}.c2.fixations(i).eyes_of_left_pic_duration_per_fixastion = lookLeftEyesDurations;
+        analysis_struct{1, 1}.c2.fixations(i).eyes_of_left_pic_duration_sum = sum(lookLeftEyesDurations(:,2));
+        analysis_struct{1, 1}.c2.fixations(i).eyes_of_right_pic_duration_per_fixastion = lookRightEyesDurations;
+        analysis_struct{1, 1}.c2.fixations(i).eyes_of_right_pic_duration_sum = sum(lookRightEyesDurations(:,2));
         
         %duration predicted response%
         if i > 50
@@ -110,7 +133,8 @@ function CompleteAnalyze()
         end
         
         %passes from one picture to another%
-        passes = 0;
+        passesToLeft = 0;
+        passesToRight = 0;
         size = length(lookLeftDurations(:,1)) + length(lookRightDurations(:,1));
         passes_tmp = zeros(size,1);
         index_left = 1;
@@ -144,12 +168,15 @@ function CompleteAnalyze()
             
         if passesIndex > 1
             for passesI = 2:(passesIndex-1)
-                if passes_tmp(passesI-1) ~= passes_tmp(passesI)
-                    passes = passes +1;
+                if passes_tmp(passesI-1) < passes_tmp(passesI)
+                    passesToLeft = passesToLeft +1;
+                elseif passes_tmp(passesI-1) > passes_tmp(passesI)
+                    passesToRight = passesToRight +1;
                 end
             end
         end
-        analysis_struct{1, 1}.c2.fixations(i).total_passes = passes;
+        analysis_struct{1, 1}.c2.fixations(i).passes_to_left = passesToLeft;
+        analysis_struct{1, 1}.c2.fixations(i).passes_to_right = passesToRight;
         
         %last fixation and prediction%
         if ((passes_tmp(length(passes_tmp)) == 0) && (strcmp('Left',analysis_struct{1, 1}.c2.fixations(i).response)))
