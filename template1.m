@@ -6,10 +6,9 @@ function template1()
 % This function is a framework for building experiments for psychtoolbox.
 % Three main sections:
 %
-% # Experi
-ment Definitions
+% # Experiment Definitions
 % # GUI
-%10 # Experiment function - called via the gui's [run experiment] button.
+% # Experiment function - called via the gui's [run experiment] button.
 %
 % ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 % 
@@ -361,6 +360,8 @@ function runExp()
             Screen('Preference', 'SkipSyncTests', 0);
             HideCursor;
         end
+        Screen('Preference','SkipSyncTests', 1);
+        Screen('Preference','VisualDebugLevel', 0);
         [window, window_rect] = PsychImaging('OpenWindow', screen_i, BACKGROUND_COLOR);
         Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');        
         Screen('Preference', 'VisualDebugLevel', 3);            
@@ -956,12 +957,13 @@ function runExp()
     end
     
     function [LeftPicRank, RightPicRank] = getRankFromUser(window, FIXATION_CROSS_COLOR, msgs)
-        if strcmp(START_WITH,'left')         
-            text2 = 'What is the your rank (1-9) of the right picture?';
-            text1 = 'What is the your rank (1-9) of the left picture?';
+        if strcmp(START_WITH,'left')        
+            text2 = 'What is the your rank (1-9) of the right picture?  ';
+            text1 = 'What is the your rank (1-9) of the left picture?  ';
             while 1
-                LeftPicRank = displayInputDlgScreen(window, [100 100], text1, FIXATION_CROSS_COLOR); 
-                if ((isempty(LeftPicRank)) | (LeftPicRank == -1) | (length(LeftPicRank) == 1 && (LeftPicRank(1) <= 0)) | (length(LeftPicRank) >= 2))
+                LeftPicRank = Ask(window,text1,INEXP_TEXT_COLOR,BACKGROUND_COLOR ,'GetChar','center','center');
+                LeftPicRank = str2double(LeftPicRank);
+                if ((isfloat(LeftPicRank) == 0) | (isempty(LeftPicRank)) | (LeftPicRank == -1) | (LeftPicRank >  9) | (LeftPicRank < 1))
                     drawImageInstructions(msgs{NUMBER_OF_MSG_INVALID_KEY_FOR_RANK_TYPED});
                     KbWait([],2);
                 else
@@ -969,8 +971,9 @@ function runExp()
                 end
             end
             while 1
-                RightPicRank = displayInputDlgScreen(window, [100 100],text2, FIXATION_CROSS_COLOR);                         
-                if ((isempty(RightPicRank)) | (RightPicRank == -1) | (length(RightPicRank) == 1 && (RightPicRank(1) <= 0)) | (length(RightPicRank) >= 2))
+                RightPicRank = Ask(window,text2,INEXP_TEXT_COLOR,BACKGROUND_COLOR ,'GetChar','center','center');
+                RightPicRank = str2double(RightPicRank);
+                if ((isfloat(RightPicRank) == 0) | (isempty(RightPicRank)) | (RightPicRank >  9) | (RightPicRank < 1))
                     drawImageInstructions(msgs{NUMBER_OF_MSG_INVALID_KEY_FOR_RANK_TYPED});
                     KbWait([],2);
                     
@@ -979,11 +982,12 @@ function runExp()
                 end
             end
         else
-             text1 = 'What is the your rank (1-9) of the right picture?';
-             text2 = 'What is the your rank (1-9) of the left picture?';
+             text1 = 'What is the your rank (1-9) of the right picture?  ';
+             text2 = 'What is the your rank (1-9) of the left picture?  ';
              while 1
-                RightPicRank = displayInputDlgScreen(window, [100 100], text1, FIXATION_CROSS_COLOR); 
-                if ((isempty(RightPicRank)) | (RightPicRank == -1) | (length(RightPicRank) == 1 && (RightPicRank(1) <= 0)) | (length(RightPicRank) >= 2))
+                RightPicRank = Ask(window,text1,INEXP_TEXT_COLOR,BACKGROUND_COLOR ,'GetChar','center','center');
+                RightPicRank = str2double(RightPicRank);                
+                if ((isfloat(RightPicRank) == 0) | (isempty(RightPicRank)) | (RightPicRank >  9) | (RightPicRank < 1))
                     drawImageInstructions(msgs{NUMBER_OF_MSG_INVALID_KEY_FOR_RANK_TYPED});
                     KbWait([],2);
                 else
@@ -991,8 +995,9 @@ function runExp()
                 end
             end
             while 1
-                LeftPicRank = displayInputDlgScreen(window, [100 100],text2, FIXATION_CROSS_COLOR);                         
-                if ((isempty(LeftPicRank)) | (LeftPicRank == -1) | (length(LeftPicRank) == 1 && (LeftPicRank(1) <= 0)) | (length(LeftPicRank) >= 2))
+                LeftPicRank = Ask(window,text2,INEXP_TEXT_COLOR,BACKGROUND_COLOR ,'GetChar','center','center');
+                LeftPicRank = str2double(LeftPicRank);
+                if ((isfloat(LeftPicRank) == 0) | (isempty(LeftPicRank)) | (LeftPicRank < 1) | (LeftPicRank > 9))
                     drawImageInstructions(msgs{NUMBER_OF_MSG_INVALID_KEY_FOR_RANK_TYPED});
                     KbWait([],2);
                 else
