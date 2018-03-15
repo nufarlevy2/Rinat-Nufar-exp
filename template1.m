@@ -118,9 +118,9 @@ ESC = 9;
 NUMBER_OF_BLOCKS = 2;
 BLOCKS_NR = NUMBER_OF_BLOCKS;
 PATH_TO_PICS = char('resources\pics\');
-NUMBER_OF_PICS = 6;
+NUMBER_OF_PICS = 60;
 
-NUMBER_OF_TRIALS_PER_BLOCK = 5;
+NUMBER_OF_TRIALS_PER_BLOCK = 100;
 
 %experiment's parameters definitions - not included in the gui
 GUI_BACKGROUND_COLOR= [0.8 0.8 0.8];
@@ -360,8 +360,8 @@ function runExp()
             Screen('Preference', 'SkipSyncTests', 0);
             HideCursor;
         end
-        Screen('Preference','SkipSyncTests', 1);
-        Screen('Preference','VisualDebugLevel', 0);
+%         Screen('Preference','SkipSyncTests', 1);
+%         Screen('Preference','VisualDebugLevel', 0);
         [window, window_rect] = PsychImaging('OpenWindow', screen_i, BACKGROUND_COLOR);
         Screen('BlendFunction', window, 'GL_SRC_ALPHA', 'GL_ONE_MINUS_SRC_ALPHA');        
         Screen('Preference', 'VisualDebugLevel', 3);            
