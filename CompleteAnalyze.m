@@ -1,18 +1,28 @@
-function CompleteAnalyze()
-    prompt = 'Please enter the number of subject (in order to get the behevioral struct): ';
-    subjectNumber = input(prompt,'s');
+function result = CompleteAnalyze(subjectNumber)
+
     BehevioralMatFilePath = fullfile('resources','data files','behavioral data',['expdata',subjectNumber,'.mat']);
-    analyesedStractFilePath = fullfile('resources','matlabFiles','analysis_struct.mat');
+    analyesedStractFilePath = fullfile('resources','matlabFiles',['s',subjectNumber],'analysis_struct.mat');
+    PolititionsFile = "PolititiansWithFacePositions.mat";
     analyesedStractFilePathWithoutFile = fullfile('resources','matlabFiles');
     try
         load(analyesedStractFilePath);
         load(BehevioralMatFilePath);
-        disp('loading succesfull');
+        load(PolititionsFile);
+        disp('Loading succesfull');
     catch
-        disp('could not open file');
+        disp('Could not open files');
+        return;
     end
+    %TMP objects
+    averagedCandidatesRankTemp = cell(60,1);
     endTrialsIndex = length(analysis_struct{1, 1}.c2.fixations(1,:));
+    resultRacePredicted = zeros(endTrialsIndex,2);
+    
     for i = 1:endTrialsIndex
+        %check for ESC press:
+        if analysis_struct{1, 1}.c2.fixations(i).fixations_onsets == 1
+            continue;
+        end
         %response%
         if EXPDATA.trials(i).response == 0
             analysis_struct{1, 1}.c2.fixations(i).response = 'Left';
@@ -72,10 +82,16 @@ function CompleteAnalyze()
         analysis_struct{1, 1}.c2.saccades(i).microsacadas = myMicrosacadas;
         
         %time that the subject looked on each pic%
+        leftPicNum = EXPDATA.trials(i).left_picture;
+        rightPicNum = EXPDATA.trials(i).right_picture;
         picLeftRangeX = [200,760];
         picRightRangeX = [1150,1710];
         picsRangeY = [100,940];
         picsRangeEyesY = [250,450];
+        picsLeftFaceRangeX = [picLeftRangeX(1)+(Polititians.FaceXStart(leftPicNum)*2),picLeftRangeX(1)+(Polititians.FaceXEnd(leftPicNum)*2)];
+        picsLeftFaceRangeY = [picsRangeY(1)+(Polititians.FaceYStart(leftPicNum)*2),picsRangeY(1)+(Polititians.FaceYEnd(leftPicNum)*2)];
+        picsRightFaceRangeX = [picRightRangeX(1)+(Polititians.FaceXStart(rightPicNum)*2),picRightRangeX(1)+(Polititians.FaceXEnd(rightPicNum)*2)];
+        picsRightFaceRangeY = [picsRangeY(1)+(Polititians.FaceYStart(rightPicNum)*2),picsRangeY(1)+(Polititians.FaceYEnd(rightPicNum)*2)];
         lookLeftDurations = zeros([],2);
         lookRightDurations = zeros([],2);
         indexLeft = 1;
@@ -84,7 +100,10 @@ function CompleteAnalyze()
         lookRightEyesDurations = zeros([],2);
         indexEyesLeft = 1;
         indexEyesRight = 1;
-        
+        lookLeftFaceDurations = zeros([],2);
+        lookRightFaceDurations = zeros([],2);
+        indexFaceLeft = 1;
+        indexFaceRight = 1;
         for intI = 1:length(myAvarage(:,1))
             %checking left picture fixation
             if ((myAvarage(intI,1) >= picLeftRangeX(1)) && (myAvarage(intI,1) <= picLeftRangeX(2)) && ...
@@ -109,6 +128,17 @@ function CompleteAnalyze()
                 lookRightEyesDurations(indexEyesRight,2) = analysis_struct{1, 1}.c2.fixations(i).fixations_durations(intI);
                 indexEyesRight = indexEyesRight + 1;
             end
+            if ((myAvarage(intI,1) >= picsLeftFaceRangeX(1)) && (myAvarage(intI,1) <= picsLeftFaceRangeX(2)) && ...
+                (myAvarage(intI,2) >= picsLeftFaceRangeY(1)) && (myAvarage(intI,2) <= picsLeftFaceRangeY(2)))
+                lookLeftFaceDurations(indexFaceLeft,1) = analysis_struct{1, 1}.c2.fixations(i).fixations_onsets(intI);
+                lookLeftFaceDurations(indexFaceLeft,2) = analysis_struct{1, 1}.c2.fixations(i).fixations_durations(intI);
+                indexFaceLeft = indexFaceLeft + 1;
+            elseif ((myAvarage(intI,1) >= picsRightFaceRangeX(1)) && (myAvarage(intI,1) <= picsRightFaceRangeX(2)) && ...
+                (myAvarage(intI,2) >= picsRightFaceRangeY(1)) && (myAvarage(intI,2) <= picsRightFaceRangeY(2)))
+                lookRightFaceDurations(indexFaceRight,1) = analysis_struct{1, 1}.c2.fixations(i).fixations_onsets(intI);
+                lookRightFaceDurations(indexFaceRight,2) = analysis_struct{1, 1}.c2.fixations(i).fixations_durations(intI);
+                indexFaceRight = indexFaceRight + 1;
+            end
         end
         %pic%
         analysis_struct{1, 1}.c2.fixations(i).left_pic_duration_per_fixastion = lookLeftDurations;
@@ -120,6 +150,11 @@ function CompleteAnalyze()
         analysis_struct{1, 1}.c2.fixations(i).eyes_of_left_pic_duration_sum = sum(lookLeftEyesDurations(:,2));
         analysis_struct{1, 1}.c2.fixations(i).eyes_of_right_pic_duration_per_fixastion = lookRightEyesDurations;
         analysis_struct{1, 1}.c2.fixations(i).eyes_of_right_pic_duration_sum = sum(lookRightEyesDurations(:,2));
+        %face%
+        analysis_struct{1, 1}.c2.fixations(i).face_of_left_pic_duration_per_fixastion = lookLeftFaceDurations;
+        analysis_struct{1, 1}.c2.fixations(i).face_of_left_pic_duration_sum = sum(lookLeftFaceDurations(:,2));
+        analysis_struct{1, 1}.c2.fixations(i).face_of_right_pic_duration_per_fixastion = lookRightFaceDurations;
+        analysis_struct{1, 1}.c2.fixations(i).face_of_right_pic_duration_sum = sum(lookRightFaceDurations(:,2));
         
         %duration predicted response%
         if i > 50
@@ -190,8 +225,37 @@ function CompleteAnalyze()
         else
             analysis_struct{1, 1}.c2.fixations(i).last_fixation_predicted_response = 'Abstained';
         end
+        %Put in a list all the candidate ranks
+        picLeftNum = EXPDATA.trials(i).left_picture;
+        picRightNum = EXPDATA.trials(i).right_picture;
+        if (~(isnan(picLeftNum) || isnan(analysis_struct{1, 1}.c2.fixations(i).left_picture_rank)))
+                averagedCandidatesRankTemp{picLeftNum}(length(averagedCandidatesRankTemp{picLeftNum})+1) = EXPDATA.trials(i).left_picture_rank;
+        end
+        if (~(isnan(picRightNum) || isnan(analysis_struct{1, 1}.c2.fixations(i).right_picture_rank)))
+                 averagedCandidatesRankTemp{picRightNum}(length(averagedCandidatesRankTemp{picRightNum})+1) = EXPDATA.trials(i).right_picture_rank;
+        end   
+        
+        %checking the models on the data
+        modelsPredicted = data2models(lookLeftFaceDurations, lookRightFaceDurations);
+        if (modelsPredicted(1) == 0 && EXPDATA.trials(i).response == 0) ...
+                || (modelsPredicted(1) == 1 && EXPDATA.trials(i).response == 1)
+            resultRacePredicted(i,:) = [1,modelsPredicted(2)];
+            analysis_struct{1, 1}.c2.fixations(i).race_model_predicted_response = 'YES';
+        elseif (modelsPredicted(1) ~= 0 && EXPDATA.trials(i).response == 0) ...
+                || (modelsPredicted(1) ~= 1 && EXPDATA.trials(i).response == 1)
+            resultRacePredicted(i,:) = [0,modelsPredicted(2)];            
+            analysis_struct{1, 1}.c2.fixations(i).race_model_predicted_response = 'NO';
+        else
+            resultRacePredicted(i,:) = [NaN,0];            
+            analysis_struct{1, 1}.c2.fixations(i).race_model_predicted_response = 'NULL';
+        end
+        
         %save the struct%
         save(analyesedStractFilePath,'analysis_struct');
     end
+    averagedCandidatesRank = cellfun(@mean,averagedCandidatesRankTemp);
+    PresentageOfConsistency = WhatIsThePresentageOfConsistency(averagedCandidatesRank, endTrialsIndex,EXPDATA.trials);
+    raceAccuracy = length(find(resultRacePredicted(:,1)==1))/length(find(~isnan(resultRacePredicted(:,1))));
+    result = {subjectNumber, PresentageOfConsistency, raceAccuracy};
     disp('-------Complete!--------');
 end
