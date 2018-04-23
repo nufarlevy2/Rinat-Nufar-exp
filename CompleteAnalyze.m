@@ -1,4 +1,4 @@
-function result = CompleteAnalyze(subjectNumber)
+function result = CompleteAnalyze(subjectNumber, Race)
 
     BehevioralMatFilePath = fullfile('resources','data files','behavioral data',['expdata',subjectNumber,'.mat']);
     analyesedStractFilePath = fullfile('resources','matlabFiles',['s',subjectNumber],'analysis_struct.mat');
@@ -236,7 +236,7 @@ function result = CompleteAnalyze(subjectNumber)
         end   
         
         %checking the models on the data
-        modelsPredicted = data2models(lookLeftFaceDurations, lookRightFaceDurations);
+        modelsPredicted = data2models(lookLeftFaceDurations, lookRightFaceDurations,Race);
         if (modelsPredicted(1) == 0 && EXPDATA.trials(i).response == 0) ...
                 || (modelsPredicted(1) == 1 && EXPDATA.trials(i).response == 1)
             resultRacePredicted(i,:) = [1,modelsPredicted(2)];
@@ -257,5 +257,5 @@ function result = CompleteAnalyze(subjectNumber)
     PresentageOfConsistency = WhatIsThePresentageOfConsistency(averagedCandidatesRank, endTrialsIndex,EXPDATA.trials);
     raceAccuracy = length(find(resultRacePredicted(:,1)==1))/length(find(~isnan(resultRacePredicted(:,1))));
     result = {subjectNumber, PresentageOfConsistency, raceAccuracy};
-    disp('-------Complete!--------');
+    disp("-------Complete Subject "+subjectNumber+"--------");
 end
