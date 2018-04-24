@@ -2,13 +2,14 @@ function competeAnalyzeForNumOfSubject()
 %     prompt = 'Please enter the numbers of all subjects seperated with - ",": ';
 %     subjectNumbersTemp = input(prompt,'s');
 %     subjectNumbers = strsplit(subjectNumbersTemp,",");
-    subjectNumbers = {'100', '105', '107', '108', '110', '113', '115', '116', '117'};
+     subjectNumbers = {'100', '105', '107', '108', '110', '113', '115', '116', '117'};
+%    subjectNumbers = {'100', '105'};
     means.primaryInput = 0;
     means.secondaryInput = 0;
     means.averagedAccuracy = 0;
     len = length(subjectNumbers);
-    parameters = [[0.9,0.1]];
-%     parameters = [[0.9,0.1];[0.8,0.2];[0.7,0.3];[0.6,0.4];[0.55,0.45]];
+%     parameters = [[0.9,0.1]];
+    parameters = [[0.9,0.1];[0.8,0.2];[0.7,0.3];[0.6,0.4];[0.55,0.45]];
     for parameter = 1:length(parameters(:,1)) 
         Race.Threshold = 2500;
         Race.primaryInput = parameters(parameter,1);
@@ -26,8 +27,9 @@ function competeAnalyzeForNumOfSubject()
         meanAccuracyOfRace = mean([finalReport(:).RaceAccuracy]);
         Race.meanAccuracyOfRace = meanAccuracyOfRace;
         means(parameter).averagedAccuracy = Race.meanAccuracyOfRace;
-        disp("-------Complete Full Analizer on All Subjects--------");
-        save(['finalReport_',num2str(parameters(parameter,1)),'-',num2str(parameters(parameter,2))],'-struct','finalReport');    
+        disp("-------Complete Full Analizer on All Subjects for Parameter "+...
+            num2str(parameters(parameter,1))+"-"+num2str(parameters(parameter,2))+"--------");
+        save(['finalReport_',num2str(parameters(parameter,1)),'-',num2str(parameters(parameter,2)),'.mat'],'finalReport');    
     end
-    save('MeansOfRaceAccuracy','-struct','means');
+    save('MeansOfRaceAccuracy.mat','means');
 end
