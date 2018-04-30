@@ -1,4 +1,4 @@
-function result = CompleteAnalyze(subjectNumber, Race)
+function result = CompleteAnalyze(subjectNumber, Race, Diffusion)
 
     BehevioralMatFilePath = fullfile('resources','data files','behavioral data',['expdata',subjectNumber,'.mat']);
     analyesedStractFilePath = fullfile('resources','matlabFiles',['s',subjectNumber],'analysis_struct.mat');
@@ -16,8 +16,7 @@ function result = CompleteAnalyze(subjectNumber, Race)
     %TMP objects
     averagedCandidatesRankTemp = cell(60,1);
     endTrialsIndex = length(analysis_struct{1, 1}.c2.fixations(1,:));
-    resultRacePredicted = zeros(endTrialsIndex,2);
-    
+    resultModelsPredicted = zeros(endTrialsIndex,4);
     for i = 1:endTrialsIndex
         %check for ESC press:
         if analysis_struct{1, 1}.c2.fixations(i).fixations_onsets == 1
@@ -236,26 +235,38 @@ function result = CompleteAnalyze(subjectNumber, Race)
         end   
         
         %checking the models on the data
-        modelsPredicted = data2models(lookLeftFaceDurations, lookRightFaceDurations,Race);
+        modelsPredicted = data2models(lookLeftFaceDurations, lookRightFaceDurations,Race, Diffusion);
         if (modelsPredicted(1) == 0 && EXPDATA.trials(i).response == 0) ...
                 || (modelsPredicted(1) == 1 && EXPDATA.trials(i).response == 1)
-            resultRacePredicted(i,:) = [1,modelsPredicted(2)];
+            resultModelsPredicted(i,[1,2]) = [1,modelsPredicted(2)];
             analysis_struct{1, 1}.c2.fixations(i).race_model_predicted_response = 'YES';
         elseif (modelsPredicted(1) ~= 0 && EXPDATA.trials(i).response == 0) ...
                 || (modelsPredicted(1) ~= 1 && EXPDATA.trials(i).response == 1)
-            resultRacePredicted(i,:) = [0,modelsPredicted(2)];            
+            resultModelsPredicted(i,[1,2]) = [0,modelsPredicted(2)];            
             analysis_struct{1, 1}.c2.fixations(i).race_model_predicted_response = 'NO';
         else
-            resultRacePredicted(i,:) = [NaN,0];            
+            resultModelsPredicted(i,[1,2]) = [NaN,0];
             analysis_struct{1, 1}.c2.fixations(i).race_model_predicted_response = 'NULL';
         end
-        
+        if (modelsPredicted(3) == 0 && EXPDATA.trials(i).response == 0) ...
+                || (modelsPredicted(3) == 1 && EXPDATA.trials(i).response == 1)
+            resultModelsPredicted(i,[3,4]) = [1,modelsPredicted(4)];
+            analysis_struct{1, 1}.c2.fixations(i).diffusion_model_predicted_response = 'YES';
+        elseif (modelsPredicted(3) ~= 0 && EXPDATA.trials(i).response == 0) ...
+                || (modelsPredicted(3) ~= 1 && EXPDATA.trials(i).response == 1)
+            resultModelsPredicted(i,[3,4]) = [0,modelsPredicted(4)];            
+            analysis_struct{1, 1}.c2.fixations(i).diffusion_model_predicted_response = 'NO';            
+        else
+            resultModelsPredicted(i,[3,4]) = [NaN,0];
+            analysis_struct{1, 1}.c2.fixations(i).diffusion_model_predicted_response = 'NULL';
+        end 
         %save the struct%
         save(analyesedStractFilePath,'analysis_struct');
     end
     averagedCandidatesRank = cellfun(@mean,averagedCandidatesRankTemp);
     PresentageOfConsistency = WhatIsThePresentageOfConsistency(averagedCandidatesRank, endTrialsIndex,EXPDATA.trials);
-    raceAccuracy = length(find(resultRacePredicted(:,1)==1))/length(find(~isnan(resultRacePredicted(:,1))));
-    result = {subjectNumber, PresentageOfConsistency, raceAccuracy};
+    resultRacePredicted = length(find(resultModelsPredicted(:,1)==1))/length(find(~isnan(resultModelsPredicted(:,1))));
+    resultDiffusionPredicted = length(find(resultModelsPredicted(:,3)==1))/length(find(~isnan(resultModelsPredicted(:,3))));
+    result = {subjectNumber, PresentageOfConsistency, resultRacePredicted, resultDiffusionPredicted};
     disp("-------Complete Subject "+subjectNumber+"--------");
 end
