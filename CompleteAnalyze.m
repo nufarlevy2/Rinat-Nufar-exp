@@ -235,7 +235,11 @@ function result = CompleteAnalyze(subjectNumber, Race, Diffusion)
         end   
         
         %checking the models on the data
-        modelsPredicted = data2models(lookLeftFaceDurations, lookRightFaceDurations,Race, Diffusion);
+        if EXPDATA.trials(i).response == 0 || EXPDATA.trials(i).response == 1
+            modelsPredicted = data2models(lookLeftFaceDurations, lookRightFaceDurations,Race, Diffusion);
+        else
+            modelsPredicted = [0,0,0,0];
+        end
         if (modelsPredicted(1) == 0 && EXPDATA.trials(i).response == 0) ...
                 || (modelsPredicted(1) == 1 && EXPDATA.trials(i).response == 1)
             resultModelsPredicted(i,[1,2]) = [1,modelsPredicted(2)];
@@ -267,6 +271,11 @@ function result = CompleteAnalyze(subjectNumber, Race, Diffusion)
     PresentageOfConsistency = WhatIsThePresentageOfConsistency(averagedCandidatesRank, endTrialsIndex,EXPDATA.trials);
     resultRacePredicted = length(find(resultModelsPredicted(:,1)==1))/length(find(~isnan(resultModelsPredicted(:,1))));
     resultDiffusionPredicted = length(find(resultModelsPredicted(:,3)==1))/length(find(~isnan(resultModelsPredicted(:,3))));
-    result = {subjectNumber, PresentageOfConsistency, resultRacePredicted, resultDiffusionPredicted};
+    if resultRacePredicted < 0.48 && resultDiffusionPredicted < 0.48
+        modelsPredictedOtherDirectionTrue = subjectLookingAt(averagedCandidatesRank, analysis_struct{1, 1}.c2.fixations, endTrialsIndex);
+    else
+        modelsPredictedOtherDirectionTrue = NaN;
+    end
+    result = {subjectNumber, PresentageOfConsistency, resultRacePredicted, resultDiffusionPredicted, modelsPredictedOtherDirectionTrue};
     disp("-------Complete Subject "+subjectNumber+"--------");
 end
