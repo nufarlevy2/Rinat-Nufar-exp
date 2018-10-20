@@ -1,13 +1,15 @@
-function result = CompleteAnalyze(subjectNumber, Race, Diffusion)
+function result = CompleteAnalyze(subjectNumber, Race, Diffusion, LCA)
 
     BehevioralMatFilePath = fullfile('resources','data files','behavioral data',['expdata',subjectNumber,'.mat']);
     analyesedStractFilePath = fullfile('resources','matlabFiles',['s',subjectNumber],'analysis_struct.mat');
+    familarityTablePath = fullfile('resources','matlabFiles',['s',subjectNumber],'familiratyTable.mat');
     PolititionsFile = "PolititiansWithFacePositions.mat";
     analyesedStractFilePathWithoutFile = fullfile('resources','matlabFiles');
     try
         load(analyesedStractFilePath);
         load(BehevioralMatFilePath);
         load(PolititionsFile);
+        load(familarityTablePath);
         disp('Loading succesfull');
     catch
         disp('Could not open files');
@@ -16,11 +18,38 @@ function result = CompleteAnalyze(subjectNumber, Race, Diffusion)
     %TMP objects
     averagedCandidatesRankTemp = cell(60,1);
     endTrialsIndex = length(analysis_struct{1, 1}.c2.fixations(1,:));
-    resultModelsPredicted = zeros(endTrialsIndex,4);
+    responses = [EXPDATA.trials(:).response];
+    activeResponses0 = find(responses == 0);
+    activeResponses1 = find(responses == 1);
+    indexsOfActiveResponses = union(activeResponses0, activeResponses1);
+    % indexes that needs to be changed!
+    changedTheResponsesInHalfOfTheTrials = datasample(indexsOfActiveResponses, round((length(indexsOfActiveResponses)/2)));
+    % permutation of all data splited into trials
+    activeResponses = find(responses >= 0);
+    permutatedTrails = indexsOfActiveResponses(randperm(length(indexsOfActiveResponses)));
+    % more initilizations
+    resultModelsPredicted = zeros(endTrialsIndex,6);
+    if (mod(length(indexsOfActiveResponses),2) == 1)
+        resultModelsPredictedHalf1 = zeros(round(length(indexsOfActiveResponses)/2)-1,6);
+        resultModelsPredictedHalf2 = zeros(round(length(indexsOfActiveResponses)/2),6);
+    else
+        resultModelsPredictedHalf1 = zeros(round(length(indexsOfActiveResponses)/2),6);
+        resultModelsPredictedHalf2 = zeros(round(length(indexsOfActiveResponses)/2),6);
+    end 
     for i = 1:endTrialsIndex
         %check for ESC press:
         if analysis_struct{1, 1}.c2.fixations(i).fixations_onsets == 1
             continue;
+        end
+        
+        %%checks the familiraty of the subject with both polititians
+        % known left polititian:
+        if familiratyTable(EXPDATA.trials(i).left_picture) == 1
+            analysis_struct{1, 1}.c2.fixations(i).knowLeftPol = 1;
+        end
+        % known right polititian:
+        if familiratyTable(EXPDATA.trials(i).right_picture) == 1
+            analysis_struct{1, 1}.c2.fixations(i).knowRightPol = 1;
         end
         %response%
         if EXPDATA.trials(i).response == 0
@@ -236,13 +265,14 @@ function result = CompleteAnalyze(subjectNumber, Race, Diffusion)
         
         %checking the models on the data
         if EXPDATA.trials(i).response == 0 || EXPDATA.trials(i).response == 1
-            modelsPredicted = data2models(lookLeftFaceDurations, lookRightFaceDurations,Race, Diffusion);
+            modelsPredicted = data2models(lookLeftFaceDurations, lookRightFaceDurations,Race, Diffusion, LCA);
+            
         else
-            modelsPredicted = [0,0,0,0];
+            modelsPredicted = [0,0,0,0,0,0];
         end
         if (modelsPredicted(1) == 0 && EXPDATA.trials(i).response == 0) ...
                 || (modelsPredicted(1) == 1 && EXPDATA.trials(i).response == 1)
-            resultModelsPredicted(i,[1,2]) = [1,modelsPredicted(2)];
+            resultModelsPredicted(i,[1,2]) = [1,modelsPredicted(2)];            
             analysis_struct{1, 1}.c2.fixations(i).race_model_predicted_response = 'YES';
         elseif (modelsPredicted(1) ~= 0 && EXPDATA.trials(i).response == 0) ...
                 || (modelsPredicted(1) ~= 1 && EXPDATA.trials(i).response == 1)
@@ -263,19 +293,40 @@ function result = CompleteAnalyze(subjectNumber, Race, Diffusion)
         else
             resultModelsPredicted(i,[3,4]) = [NaN,0];
             analysis_struct{1, 1}.c2.fixations(i).diffusion_model_predicted_response = 'NULL';
+        end
+        if (modelsPredicted(5) == 0 && EXPDATA.trials(i).response == 0) ...
+                || (modelsPredicted(5) == 1 && EXPDATA.trials(i).response == 1)
+            resultModelsPredicted(i,[5,6]) = [1,modelsPredicted(6)];
+            analysis_struct{1, 1}.c2.fixations(i).LCA_model_predicted_response = 'YES';
+        elseif (modelsPredicted(5) ~= 0 && EXPDATA.trials(i).response == 0) ...
+                || (modelsPredicted(5) ~= 1 && EXPDATA.trials(i).response == 1)
+            resultModelsPredicted(i,[5,6]) = [0,modelsPredicted(6)];            
+            analysis_struct{1, 1}.c2.fixations(i).LCA_model_predicted_response = 'NO';            
+        else
+            resultModelsPredicted(i,[5,6]) = [NaN,0];
+            analysis_struct{1, 1}.c2.fixations(i).LCA_model_predicted_response = 'NULL';
         end 
         %save the struct%
         save(analyesedStractFilePath,'analysis_struct');
     end
     averagedCandidatesRank = cellfun(@mean,averagedCandidatesRankTemp);
     PresentageOfConsistency = WhatIsThePresentageOfConsistency(averagedCandidatesRank, endTrialsIndex,EXPDATA.trials);
+    resultModelsPredictedHalf1 = resultModelsPredicted(permutatedTrails(1:length(resultModelsPredictedHalf1)),:);
+    resultModelsPredictedHalf2 = resultModelsPredicted(permutatedTrails((length(resultModelsPredictedHalf1(:,1))+1):(length(resultModelsPredictedHalf1(:,1))+length(resultModelsPredictedHalf2(:,1)))),:);
     resultRacePredicted = length(find(resultModelsPredicted(:,1)==1))/length(find(~isnan(resultModelsPredicted(:,1))));
+    resultRacePredictedHalf1 = length(find(resultModelsPredictedHalf1(:,1)==1))/length(find(~isnan(resultModelsPredictedHalf1(:,1))));
+    resultRacePredictedHalf2 = length(find(resultModelsPredictedHalf2(:,1)==1))/length(find(~isnan(resultModelsPredictedHalf2(:,1))));
     resultDiffusionPredicted = length(find(resultModelsPredicted(:,3)==1))/length(find(~isnan(resultModelsPredicted(:,3))));
-    if resultRacePredicted < 0.48 && resultDiffusionPredicted < 0.48
+    resultDiffusionPredictedHalf1 = length(find(resultModelsPredictedHalf1(:,3)==1))/length(find(~isnan(resultModelsPredictedHalf1(:,3))));
+    resultDiffusionPredictedHalf2 = length(find(resultModelsPredictedHalf2(:,3)==1))/length(find(~isnan(resultModelsPredictedHalf2(:,3))));
+    resultLCAPredicted = length(find(resultModelsPredicted(:,5)==1))/length(find(~isnan(resultModelsPredicted(:,5))));
+    resultLCAPredictedHalf1 = length(find(resultModelsPredictedHalf1(:,5)==1))/length(find(~isnan(resultModelsPredictedHalf1(:,5))));
+    resultLCAPredictedHalf2 = length(find(resultModelsPredictedHalf2(:,5)==1))/length(find(~isnan(resultModelsPredictedHalf2(:,5))));
+    if mean([resultRacePredicted, resultDiffusionPredicted, resultLCAPredicted]) < 0.48
         modelsPredictedOtherDirectionTrue = subjectLookingAt(averagedCandidatesRank, analysis_struct{1, 1}.c2.fixations, endTrialsIndex);
     else
         modelsPredictedOtherDirectionTrue = NaN;
     end
-    result = {subjectNumber, PresentageOfConsistency, resultRacePredicted, resultDiffusionPredicted, modelsPredictedOtherDirectionTrue};
+    result = {subjectNumber, PresentageOfConsistency, resultRacePredicted, resultDiffusionPredicted, modelsPredictedOtherDirectionTrue, resultLCAPredicted, resultRacePredictedHalf1, resultRacePredictedHalf2, resultDiffusionPredictedHalf1, resultDiffusionPredictedHalf2, resultLCAPredictedHalf1, resultLCAPredictedHalf2};
     disp("-------Complete Subject "+subjectNumber+"--------");
 end
