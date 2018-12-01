@@ -203,7 +203,7 @@ ENUM_EYE_TRACKING_EYE_TRACKER= ExperimentGuiBuilder.ENUM_EYE_TRACKING_EYE_TRACKE
 gui_builder= ExperimentGuiBuilder(EXPERIMENT_NAME, GUI_BACKGROUND_COLOR, @runExpFunc, GUI_XML_FILE);
 
 %PLACE YOUR UICONTROLS DEFINITIONS HERE
-gui_builder.uicontrolRadios(4, 'Start with', {'left', 'right'}, {'left', 'right'},0);            
+gui_builder.uicontrolReadNum(4, 'Number Of Trials Per Block', ExperimentGuiBuilder.ENUM_VERIFY_POSITIVE_REAL);
 
 %fixation cross uicontrols
 gui_builder.uicontrolReadNum(1, 'Fixation Cross Arms Length', ExperimentGuiBuilder.ENUM_VERIFY_POSITIVE_REAL);
@@ -246,7 +246,10 @@ function runExpFunc(~, ~)
     FIXATION_CROSS_ARMS_LEN_IN_VANGLES= curr_exp_params_values{1};
     FIXATION_CROSS_ARMS_WIDTH_IN_VANGLES= curr_exp_params_values{2};
     FIXATION_CROSS_COLOR= curr_exp_params_values{3}; 
-    START_WITH = curr_exp_params_values{4}; 
+    numOfTrialsPerBlockFromUser = curr_exp_params_values{4}; 
+    if numOfTrialsPerBlockFromUser >= 1
+        NUMBER_OF_TRIALS_PER_BLOCK = numOfTrialsPerBlockFromUser;
+    end
     
     [is_file_unique, user_response]= verifyFileUniqueness(fullfile(EXPDATA_SAVE_FOLDER, [EXPDATA_SAVE_FILE_NAME_PREFIX, num2str(SUBJECT_NUMBER), EXPDATA_SAVE_FILE_NAME_SUFFIX, '.mat']));
     if ~is_file_unique && ~strcmp(user_response,'Overwrite')
@@ -517,19 +520,56 @@ function runExp()
     %2: ...
     %3: ...
     % ...
-    function [conditions_mat]= randomizeConditions()
-        TOTAL_TRIALS_NR = NUMBER_OF_BLOCKS * NUMBER_OF_TRIALS_PER_BLOCK;
-        conditions_mat = NaN(TOTAL_TRIALS_NR, 2);
-        for trial_i = 1 : TOTAL_TRIALS_NR
-            %random for the exp and save it to the condition matrix
-            myFirstPic = randi(NUMBER_OF_PICS);
-            myPicsWithoutFirstChosenOne = setdiff(1:NUMBER_OF_PICS, myFirstPic);
-            mySecondPic = myPicsWithoutFirstChosenOne(ceil(numel(myPicsWithoutFirstChosenOne) * rand)); 
-            conditions_mat(trial_i,1) = myFirstPic;
-            conditions_mat(trial_i,2) = mySecondPic;
+%     function [conditions_mat]= randomizeConditions()
+%         TOTAL_TRIALS_NR = NUMBER_OF_BLOCKS * NUMBER_OF_TRIALS_PER_BLOCK;
+%         conditions_mat = NaN(TOTAL_TRIALS_NR, 2);
+%         for trial_i = 1 : TOTAL_TRIALS_NR
+%             %random for the exp and save it to the condition matrix
+%             myFirstPic = randi(NUMBER_OF_PICS);
+%             myPicsWithoutFirstChosenOne = setdiff(1:NUMBER_OF_PICS, myFirstPic);
+%             mySecondPic = myPicsWithoutFirstChosenOne(ceil(numel(myPicsWithoutFirstChosenOne) * rand)); 
+%             conditions_mat(trial_i,1) = myFirstPic;
+%             conditions_mat(trial_i,2) = mySecondPic;
+%         end
+%         save('conditions_mat.mat', 'conditions_mat');
+%     end
+
+function [conditions_mat]= randomizeConditions()
+    TOTAL_TRIALS_NR = NUMBER_OF_BLOCKS * NUMBER_OF_TRIALS_PER_BLOCK;
+    conditions_mat = NaN(TOTAL_TRIALS_NR, 2);
+    permutedPicNumbers = randperm(NUMBER_OF_PICS);
+    indexInPermutedPicNumbers = 1;
+    needToInitilizePermutedPicNumbers = false;
+    for blockNumber = 1:NUMBER_OF_BLOCKS
+        for trialNumber = 1:NUMBER_OF_TRIALS_PER_BLOCK
+            placeInMat = ((blockNumber-1)*NUMBER_OF_TRIALS_PER_BLOCK)+trialNumber;
+            switch blockNumber
+                case 1
+                    conditions_mat(placeInMat, 1) = permutedPicNumbers(indexInPermutedPicNumbers);
+                    conditions_mat(placeInMat, 2) = permutedPicNumbers(indexInPermutedPicNumbers+1);
+                    indexInPermutedPicNumbers = indexInPermutedPicNumbers + 2;
+                    if ((NUMBER_OF_PICS-indexInPermutedPicNumbers) <= 1)
+                        needToInitilizePermutedPicNumbers = true;
+                    end
+                case 2
+                    conditions_mat(placeInMat, 1) = permutedPicNumbers(indexInPermutedPicNumbers);
+                    conditions_mat(placeInMat, 2) = permutedPicNumbers(indexInPermutedPicNumbers);
+                    indexInPermutedPicNumbers = indexInPermutedPicNumbers + 1;
+                    if ((NUMBER_OF_PICS-indexInPermutedPicNumbers) == 0)
+                        needToInitilizePermutedPicNumbers = true;
+                    end
+                otherwise
+                    disp('Number of blocks is more then 2');
+            end
+            if needToInitilizePermutedPicNumbers
+                permutedPicNumbers = randperm(NUMBER_OF_PICS);
+                indexInPermutedPicNumbers = 1;
+                needToInitilizePermutedPicNumbers = false;
+            end
         end
-        save('conditions_mat.mat', 'conditions_mat');
     end
+    save('conditions_mat.mat', 'conditions_mat');
+end
 
     % stage 6
     function trial_overall_i = runBlocks(conditions_mat)
@@ -586,7 +626,6 @@ function runExp()
                 [trial_start_vbl, trial_end_vbl,subject_response, picRank] = runTrial(trial_vector);
                 EXPDATA.trials(trial_overall_i).response = subject_response;
                 disp('in run block');
-                disp(picRank);
                 EXPDATA.trials(trial_overall_i).left_picture_rank = picRank;
                 EXPDATA.trials(trial_overall_i).right_picture_rank = picRank;
                 EXPDATA.trials(trial_overall_i).trial_duration = trial_end_vbl-trial_start_vbl;
