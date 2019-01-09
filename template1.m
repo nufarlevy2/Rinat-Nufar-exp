@@ -4,7 +4,7 @@
 function template1()
 %% Overview
 % This fun ction is a framework for building experiments for psychtoolbox.
-% Three main sections:
+% Three main sections: 
 %
 % # Experiment  Definitions
 % # GUI
@@ -107,7 +107,8 @@ EYE_TRACKING_METHOD= [];
 EEG= [];
 DEBUG= [];
 TIME_WAITING_AT_THE_BEGINGING_OF_THE_TRIAL = 0;
-TIME_FOR_FIXATION = 1;
+TIME_FOR_FIXATION = 0.2;
+TIME_TO_WAIT_FOR_PIC = 1.2;
 NUMBER_OF_MSG_INVALID_KEY_TYPED = 7;
 LEFT = 0;
 INVALID_KEYBOARD_PRESSED = -1;
@@ -699,78 +700,85 @@ end
             % Down = Abstain
             while (1)
                 [keyIsDown, secs, keyCode] = KbCheck();
-                if (keyIsDown)
-                    trial_end_vbl = secs;
-                    pressed_key_code = find(keyCode, 1);
-                    if blockNum ~= 1 && (pressed_key_code ~= KBOARD_CODE_ESC)
-                        [picRank] = getRankFromUser(window, FIXATION_CROSS_COLOR, msgs);
-                        disp('in run trial');
-                        disp(picRank);
-                        subject_response = -1;
-                        sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
-                        sendTrigger(TRIGGERS_END_TRIAL);
-                        return;
-                    end
-                    if (pressed_key_code == KBOARD_CODE_LEFT)
-                        subject_response = LEFT;
-                        sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
-                        sendTrigger(TRIGGERS_END_TRIAL);
-                        picRank = NaN;
-                        return;
-                    elseif (pressed_key_code == KBOARD_CODE_RIGHT)
-                        subject_response = RIGHT;
-                        sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
-                        sendTrigger(TRIGGERS_END_TRIAL);
-                        picRank = NaN;
-                        return;
-                    elseif (pressed_key_code == KBOARD_CODE_DOWN)
-                        subject_response = DOWN;
-                        sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
-                        sendTrigger(TRIGGERS_END_TRIAL);
-                        picRank = NaN;
-                        return;
-                    elseif (pressed_key_code == KBOARD_CODE_ESC)
-                        sendTrigger(TRIGGERS_ESC_PRESSED);
-                        subject_response = ESC;
-                        picRank = NaN;
-                        echo(TRIGGERS_START_BREAK, num2str(TRIGGERS_START_BREAK)); 
-                        prev_font_sz = Screen('TextSize', window, INEXP_FONT_SZ);
-                        DrawFormattedText(window,'escape pressed... ',window_center_x-100, window_center_y, INEXP_TEXT_COLOR);
-                        DrawFormattedText(window, 'p -> proceed, c -> calibrate eye tracker, q -> quit experiment',window_center_x-400, window_center_y+40,INEXP_TEXT_COLOR);
-                        Screen('Flip', window);
-                        Screen('TextSize', window, prev_font_sz);
-                        while (1)
-                            [~, key_codes, ~]= KbWait([],2);
-                            key_code= find(key_codes, 1);
-                            if key_code == KBOARD_CODE_P
-                                break;
-                            elseif key_code == KBOARD_CODE_C
-                                calibrateEyeTracker();
-                                break;
-                            elseif key_code == KBOARD_CODE_Q
-                                IS_EXP_GO= false;
-                                break;
+                switch blockNum
+                    case 1
+                        if (keyIsDown)
+                            trial_end_vbl = secs;
+                            pressed_key_code = find(keyCode, 1);
+                            if (pressed_key_code == KBOARD_CODE_LEFT)
+                                subject_response = LEFT;
+                                sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
+                                sendTrigger(TRIGGERS_END_TRIAL);
+                                picRank = NaN;
+                                return;
+                            elseif (pressed_key_code == KBOARD_CODE_RIGHT)
+                                subject_response = RIGHT;
+                                sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
+                                sendTrigger(TRIGGERS_END_TRIAL);
+                                picRank = NaN;
+                                return;
+                            elseif (pressed_key_code == KBOARD_CODE_DOWN)
+                                subject_response = DOWN;
+                                sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
+                                sendTrigger(TRIGGERS_END_TRIAL);
+                                picRank = NaN;
+                                return;
+                            elseif (pressed_key_code == KBOARD_CODE_ESC)
+                                trial_end_vbl = secs;
+                                sendTrigger(TRIGGERS_ESC_PRESSED);
+                                subject_response = ESC;
+                                picRank = NaN;
+                                echo(TRIGGERS_START_BREAK, num2str(TRIGGERS_START_BREAK)); 
+                                prev_font_sz = Screen('TextSize', window, INEXP_FONT_SZ);
+                                DrawFormattedText(window,'escape pressed... ',window_center_x-100, window_center_y, INEXP_TEXT_COLOR);
+                                DrawFormattedText(window, 'p -> proceed, c -> calibrate eye tracker, q -> quit experiment',window_center_x-400, window_center_y+40,INEXP_TEXT_COLOR);
+                                Screen('Flip', window);
+                                Screen('TextSize', window, prev_font_sz);
+                                while (1)
+                                    [~, key_codes, ~]= KbWait([],2);
+                                    key_code= find(key_codes, 1);
+                                    if key_code == KBOARD_CODE_P
+                                        break;
+                                    elseif key_code == KBOARD_CODE_C
+                                        calibrateEyeTracker();
+                                        break;
+                                    elseif key_code == KBOARD_CODE_Q
+                                        IS_EXP_GO= false;
+                                        break;
+                                    end
+                                end         
+                                Screen('Flip', window);
+                                echo(TRIGGERS_END_BREAK, num2str(TRIGGERS_END_BREAK));
+                                sendTrigger(TRIGGERS_END_TRIAL);
+                                return;
+                            else
+                                subject_response = INVALID_KEYBOARD_PRESSED;
+                                picRank = NaN;
+                                sendTrigger(TRIGGERS_INVALID_KEYBOARD_PRESSED);
+                                %change is after pressing wrong key want to stop
+                                %the trail. right now if the ket board press was
+                                %wrong the trial continues.
+                                drawImageInstructions(msgs{NUMBER_OF_MSG_INVALID_KEY_TYPED});
+                                KbWait([ ],2); 
+                                sendTrigger(TRIGGERS_END_TRIAL);
+                                return;
                             end
-                        end         
-                        Screen('Flip', window);
-                        echo(TRIGGERS_END_BREAK, num2str(TRIGGERS_END_BREAK));
-                        sendTrigger(TRIGGERS_END_TRIAL);
-                        return;
-                    else
-                        subject_response = INVALID_KEYBOARD_PRESSED;
-                        picRank = NaN;
-                        sendTrigger(TRIGGERS_INVALID_KEYBOARD_PRESSED);
-                        %change is after pressing wrong key want to stop
-                        %the trail. right now if the ket board press was
-                        %wrong the trial continues.
-                        drawImageInstructions(msgs{NUMBER_OF_MSG_INVALID_KEY_TYPED});
-                        KbWait([],2); 
-                        sendTrigger(TRIGGERS_END_TRIAL);
-                        return;
-                    end
+                        end
+                    case 2
+                        if (~keyIsDown)
+                            trial_end_vbl = secs;
+                            WaitSecs(TIME_TO_WAIT_FOR_PIC);
+                            [picRank] = getRankFromUser(window, FIXATION_CROSS_COLOR, msgs);
+                            disp('in run trial');
+                            disp(picRank);
+                            subject_response = -1;
+                            sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
+                            sendTrigger(TRIGGERS_END_TRIAL);
+                            return;
+                        end
                 end
                 trial_end_vbl = secs;
-            end  
+            end
         end
     end
     % stage 7
