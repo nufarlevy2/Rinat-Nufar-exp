@@ -1,2 +1,4 @@
 **/resources/data files/
 *.asv
+*.mat
+*.xml
