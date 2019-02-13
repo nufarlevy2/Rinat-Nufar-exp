@@ -6,10 +6,14 @@ function result = CompleteAnalyze(subjectNumber, Race, Diffusion, LCA)
     PolititionsFile = "PolititiansWithFacePositions.mat";
     analyesedStractFilePathWithoutFile = fullfile('resources','matlabFiles');
     try
+        load(familarityTablePath);
+    catch
+        disp('Did not provide any familarity matrix, continue...');
+    end
+    try
         load(analyesedStractFilePath);
         load(BehevioralMatFilePath);
         load(PolititionsFile);
-        load(familarityTablePath);
         disp('Loading succesfull');
     catch
         disp('Could not open files');
@@ -41,14 +45,18 @@ function result = CompleteAnalyze(subjectNumber, Race, Diffusion, LCA)
         if analysis_struct{1, 1}.c2.fixations(i).fixations_onsets == 1
             continue;
         end
-        
-        %%checks the familiraty of the subject with both polititians
-        % known left polititian:
-        if familiratyTable(EXPDATA.trials(i).left_picture) == 1
+        if exist('familiratyTable')
+            %%checks the familiraty of the subject with both polititians
+            % known left polititian:
+            if familiratyTable(EXPDATA.trials(i).left_picture) == 1
+                analysis_struct{1, 1}.c2.fixations(i).knowLeftPol = 1;
+            end
+            % known right polititian:
+            if familiratyTable(EXPDATA.trials(i).right_picture) == 1
+                analysis_struct{1, 1}.c2.fixations(i).knowRightPol = 1;
+            end
+        else
             analysis_struct{1, 1}.c2.fixations(i).knowLeftPol = 1;
-        end
-        % known right polititian:
-        if familiratyTable(EXPDATA.trials(i).right_picture) == 1
             analysis_struct{1, 1}.c2.fixations(i).knowRightPol = 1;
         end
         %response%

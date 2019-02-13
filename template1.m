@@ -512,7 +512,6 @@ function runExp()
         end
     end
 
-    % stage 5
     % reminder -> loop through the trials if the randomizing functions dont
     % fit (dont use matlab vector indexing crap)
     %conditions_mat columns
@@ -681,15 +680,17 @@ end
             drawFixationCross(FIXATION_CROSS_ARMS_LEN, FIXATION_CROSS_ARMS_WIDTH, FIXATION_CROSS_COLOR);
             trial_start_vbl = Screen('Flip', window);
             WaitSecs(TIME_FOR_FIXATION);
-            picLeft = trial_params(1);
-            picRight = trial_params(2);
-            blockNum = trial_params(3);
+            picLeft = trial_params(1); %Trial params in place 1 is the left pic
+            picRight = trial_params(2); % " Right pic
+            blockNum = trial_params(3); %Third params is the block number
             switch blockNum
                 case 1
+                    %Put both pics in the screen
                     Screen('DrawTextures', window, [texes{picLeft}; texes{picRight}],[],[200 100 760 940;1150 100 1710 940]');
-                    EXPDATA.trials(trial_overall_i).left_picture = trial_params(1);
+                    EXPDATA.trials(trial_overall_i).left_picture = trial_params(1); 
                     EXPDATA.trials(trial_overall_i).right_picture = trial_params(2);
                 case 2
+                    %Put only one pic in the center
                     Screen('DrawTextures', window, [texes{picLeft}],[],[675 100 1225 940]);
                     EXPDATA.trials(trial_overall_i).left_picture = trial_params(1);
                     EXPDATA.trials(trial_overall_i).right_picture = trial_params(1);
@@ -724,6 +725,8 @@ end
                                 picRank = NaN;
                                 return;
                             elseif (pressed_key_code == KBOARD_CODE_ESC)
+                                %In case the user pressed escape put NaN values in the return parameters of this
+                                %trials and send you to caliberation part,gets forowrd to the next trial.
                                 trial_end_vbl = secs;
                                 sendTrigger(TRIGGERS_ESC_PRESSED);
                                 subject_response = ESC;
@@ -752,6 +755,9 @@ end
                                 sendTrigger(TRIGGERS_END_TRIAL);
                                 return;
                             else
+                                %If the subject did not press any valid key (right, left, down or escape) we present
+                                %the instructions on how to do this trial. In the results we put NaN in all
+                                %parameters and continue to the next trial
                                 subject_response = INVALID_KEYBOARD_PRESSED;
                                 picRank = NaN;
                                 sendTrigger(TRIGGERS_INVALID_KEYBOARD_PRESSED);
@@ -765,6 +771,8 @@ end
                             end
                         end
                     case 2
+                        %In case of block num 2 we wait for any key to present (keyboard or mouse click) and we get the
+                        %rank from the user in the function - getRankFromUser
                         if (~keyIsDown)
                             trial_end_vbl = secs;
                             WaitSecs(TIME_TO_WAIT_FOR_PIC);
