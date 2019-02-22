@@ -1,5 +1,8 @@
+guiXML.xml
+conditions_mat.mat
+resources/data files/data pileups/*.mat
+resources/data files/behavioral data/*.mat
 *.asv
 *.mat
 *.xml
-guiXML.xml
-resources/data files/data pileups/*.mat
+

@@ -1,5 +1,5 @@
  %TODO: fix bug in ExperimentGuiBuilder::readMultipleNums - if changing
-%number of requested numbers, then crash.
+%numb er of requested numbers, then crash.
 
 function template1()
 %% Overview
@@ -777,6 +777,8 @@ end
                             trial_end_vbl = secs;
                             WaitSecs(TIME_TO_WAIT_FOR_PIC);
                             [picRank] = getRankFromUser(window, FIXATION_CROSS_COLOR, msgs);
+%                             curr_response = drawScaleSnippet();
+%                             picRank = curr_response;
                             disp('in run trial');
                             disp(picRank);
                             subject_response = -1;
@@ -1010,10 +1012,10 @@ end
     end
     
     function [picRank] = getRankFromUser(window, FIXATION_CROSS_COLOR, msgs)    
-        text = 'What is the your rank (from 1 to 9) for this picture?  ';
-        picRank = slideScale(window,text, window_rect, {'1', '9'} );
-        picRank = round(picRank/25 );
-        picRank = 5+picRank;
+        text = ' ';
+        instructionImage = loadImagesFromFolder(fullfile('resources','scaleImages','instructions'),'png');
+        picRank = slideScale(window,text, window_rect, {'1', '10'},'image',instructionImage{1});
+        picRank = round(picRank/10);
     end
     
 
@@ -1024,6 +1026,7 @@ end
         instructions_laid_down_vbl= Screen('Flip', window);
     end
 
+    
     function tex = pngFileToTex(file_path)
         [im(:,:,1:3),~,im(:,:,4)]= imread(file_path,'png');
         tex= Screen('MakeTexture', window, im);

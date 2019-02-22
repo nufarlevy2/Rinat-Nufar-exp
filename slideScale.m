@@ -83,13 +83,13 @@ scalaPosition = 0.8;
 sliderColor    = [255 0 0];
 scaleColor    = [0 0 0];
 device        = 'mouse';
-aborttime     = 8;
+aborttime     = 50;
 responseKey   = KbName('return');
 GetMouseIndices;
 drawImage     = 0;
 startPosition = 'center';
-displayPos    = false;
-rangeType     = 1;
+displayPos    = true;
+rangeType     = 2;
 
 i = 1;
 while(i<=length(varargin))
@@ -238,7 +238,7 @@ while answer == 0
     
     % Display position
     if displayPos
-        DrawFormattedText(screenPointer, num2str(round(position)), 'center', rect(4)*(scalaPosition + 0.05)); 
+        DrawFormattedText(screenPointer, num2str(round(position/10)), 'center', rect(4)*(scalaPosition + 0.05)); 
     end
     
     % Flip screen
