@@ -1,4 +1,5 @@
-**/resources/data files/
 *.asv
 *.mat
 *.xml
+guiXML.xml
+resources/data files/data pileups/*.mat
