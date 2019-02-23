@@ -118,7 +118,7 @@ ESC = 9;
 NUMBER_OF_BLOCKS = 2;
 BLOCKS_NR = NUMBER_OF_BLOCKS;
 PATH_TO_PICS = char('resources\pics\');
-NUMBER_OF_PICS = 60;
+NUMBER_OF_PICS = 60; 
 
 NUMBER_OF_TRIALS_PER_BLOCK = 3;
 
@@ -157,7 +157,7 @@ KBOARD_CODE_LEFT=37; KBOARD_CODE_UP=38; KBOARD_CODE_RIGHT=39; KBOARD_CODE_DOWN=4
 KBOARD_CODE_0= 48; KBOARD_CODE_9= 57;
 KBOARD_CODE_NUMPAD0= 96; KBOARD_CODE_NUMPAD9= 105;
 KBOARD_CODE_SHIFT = 16;
-
+ 
 %data record object
 EXPDATA= [];
 
@@ -780,6 +780,37 @@ end
 %                             curr_response = drawScaleSnippet();
 %                             picRank = curr_response;
                             disp('in run trial');
+                            if (picRank == KBOARD_CODE_ESC)
+                                %In case the user pressed escape put NaN values in the return parameters of this
+                                %trials and send you to caliberation part,gets forowrd to the next trial.
+                                trial_end_vbl = secs;
+                                sendTrigger(TRIGGERS_ESC_PRESSED);
+                                subject_response = ESC;
+                                picRank = NaN;
+                                echo(TRIGGERS_START_BREAK, num2str(TRIGGERS_START_BREAK)); 
+                                prev_font_sz = Screen('TextSize', window, INEXP_FONT_SZ);
+                                DrawFormattedText(window,'escape pressed... ',window_center_x-100, window_center_y, INEXP_TEXT_COLOR);
+                                DrawFormattedText(window, 'p -> proceed, c -> calibrate eye tracker, q -> quit experiment',window_center_x-400, window_center_y+40,INEXP_TEXT_COLOR);
+                                Screen('Flip', window);
+                                Screen('TextSize', window, prev_font_sz);
+                                while (1)
+                                    [~, key_codes, ~]= KbWait([],2);
+                                    key_code= find(key_codes, 1);
+                                    if key_code == KBOARD_CODE_P
+                                        break;
+                                    elseif key_code == KBOARD_CODE_C
+                                        calibrateEyeTracker();
+                                        break;
+                                    elseif key_code == KBOARD_CODE_Q
+                                        IS_EXP_GO= false;
+                                        break;
+                                    end
+                                end         
+                                Screen('Flip', window);
+                                echo(TRIGGERS_END_BREAK, num2str(TRIGGERS_END_BREAK));
+                                sendTrigger(TRIGGERS_END_TRIAL);
+                                return;
+                            end
                             disp(picRank);
                             subject_response = -1;
                             sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
@@ -1015,10 +1046,17 @@ end
         text = ' ';
         instructionImage = loadImagesFromFolder(fullfile('resources','scaleImages','instructions'),'png');
         picRank = slideScale(window,text, window_rect, {'1', '10'},'image',instructionImage{1});
+        if picRank == 999999
+            picRank = KBOARD_CODE_ESC;
+            return;
+        end
         picRank = round(picRank/10);
+        if picRank == 0
+            picRank = 1;
+        end
     end
     
-
+  
     function instructions_laid_down_vbl= drawImageInstructions(img)
         tex= Screen('MakeTexture', window, img);        
         tex_rect= genRect(window_center, window_rect(3:4));

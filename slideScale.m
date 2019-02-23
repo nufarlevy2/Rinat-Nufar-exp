@@ -199,6 +199,12 @@ t0                         = GetSecs;
 answer                     = 0;
 while answer == 0
     [x,y,buttons,focus,valuators,valinfo] = GetMouse(screenPointer, 1);
+    KBOARD_CODE_ESC = 27;
+    [keyIsDown, secs, keyCode] = KbCheck();
+    if keyIsDown && find(keyCode, 1) == KBOARD_CODE_ESC
+        position = 999999;
+        return;
+    end
     if x > rect(3)*scalaLength
         x = rect(3)*scalaLength;
     elseif x < rect(3)*(1-scalaLength)
@@ -238,7 +244,11 @@ while answer == 0
     
     % Display position
     if displayPos
-        DrawFormattedText(screenPointer, num2str(round(position/10)), 'center', rect(4)*(scalaPosition + 0.05)); 
+        displayPos = round(position/10);
+        if displayPos == 0
+            displayPos = 1;
+        end
+        DrawFormattedText(screenPointer, num2str(displayPos), 'center', rect(4)*(scalaPosition + 0.05)); 
     end
     
     % Flip screen
