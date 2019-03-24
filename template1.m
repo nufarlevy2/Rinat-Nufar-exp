@@ -106,7 +106,7 @@ MAX_GAZE_DIST_FROM_CENTER_IN_VANGLES= [];
 EYE_TRACKING_METHOD= [];
 EEG= [];
 DEBUG= [];
-TIME_WAITING_AT_THE_BEGINGING_OF_THE_TRIAL = 0;
+TIME_WAITING_AT_THE_BEGINGING_OF_THE_TRIAL = 3;
 TIME_FOR_FIXATION = 1.5;
 TIME_TO_WAIT_FOR_PIC = 1.2;
 NUMBER_OF_MSG_INVALID_KEY_TYPED = 7;
@@ -698,7 +698,8 @@ end
             Screen('Flip', window);
             sendTrigger(TRIGGERS_SHOWING_PICTURE);
             WaitSecs(TIME_WAITING_AT_THE_BEGINGING_OF_THE_TRIAL);
-            % Down = Abstain
+            drawFixationCross(FIXATION_CROSS_ARMS_LEN, FIXATION_CROSS_ARMS_WIDTH, FIXATION_CROSS_COLOR);
+            Screen('Flip', window);
             while (1)
                 [keyIsDown, secs, keyCode] = KbCheck();
                 switch blockNum
@@ -714,12 +715,6 @@ end
                                 return;
                             elseif (pressed_key_code == KBOARD_CODE_RIGHT)
                                 subject_response = RIGHT;
-                                sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
-                                sendTrigger(TRIGGERS_END_TRIAL);
-                                picRank = NaN;
-                                return;
-                            elseif (pressed_key_code == KBOARD_CODE_DOWN)
-                                subject_response = DOWN;
                                 sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
                                 sendTrigger(TRIGGERS_END_TRIAL);
                                 picRank = NaN;
