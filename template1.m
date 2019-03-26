@@ -106,7 +106,8 @@ MAX_GAZE_DIST_FROM_CENTER_IN_VANGLES= [];
 EYE_TRACKING_METHOD= [];
 EEG= [];
 DEBUG= [];
-TIME_WAITING_AT_THE_BEGINGING_OF_THE_TRIAL = 3;
+ TIME_WAITING_FOR_PICTURES_IN_THE_FIRST_BLOCK = 3;
+TIME_FOR_THE_CHOICE_TEXT_IN_THE_FIRST_BLOCK = 0.8;
 TIME_FOR_FIXATION = 1.5;
 TIME_TO_WAIT_FOR_PIC = 1.2;
 NUMBER_OF_MSG_INVALID_KEY_TYPED = 7;
@@ -535,6 +536,8 @@ function runExp()
 %     end
 
 function [conditions_mat]= randomizeConditions()
+    couples = zeros(NUMBER_OF_TRIALS_PER_BLOCK, 2);
+    placeInCouples = 1;
     TOTAL_TRIALS_NR = NUMBER_OF_BLOCKS * NUMBER_OF_TRIALS_PER_BLOCK;
     conditions_mat = NaN(TOTAL_TRIALS_NR, 2);
     permutedPicNumbers = randperm(NUMBER_OF_PICS);
@@ -545,11 +548,24 @@ function [conditions_mat]= randomizeConditions()
             placeInMat = ((blockNumber-1)*NUMBER_OF_TRIALS_PER_BLOCK)+trialNumber;
             switch blockNumber
                 case 1
-                    conditions_mat(placeInMat, 1) = permutedPicNumbers(indexInPermutedPicNumbers);
-                    conditions_mat(placeInMat, 2) = permutedPicNumbers(indexInPermutedPicNumbers+1);
-                    indexInPermutedPicNumbers = indexInPermutedPicNumbers + 2;
-                    if ((NUMBER_OF_PICS-indexInPermutedPicNumbers) <= 1)
-                        needToInitilizePermutedPicNumbers = true;
+                    rpeatingCouple = true;
+                    while rpeatingCouple
+                        conditions_mat(placeInMat, 1) = permutedPicNumbers(indexInPermutedPicNumbers);
+                        conditions_mat(placeInMat, 2) = permutedPicNumbers(indexInPermutedPicNumbers+1);
+                        indexInPermutedPicNumbers = indexInPermutedPicNumbers + 2;
+                        if ((NUMBER_OF_PICS-indexInPermutedPicNumbers) <= 1)
+                            needToInitilizePermutedPicNumbers = true;
+                        end
+                        % Check for repeating couples
+                        if  ismember(conditions_mat(placeInMat, 1:2),couples, 'rows')
+                            rpeatingCouple = true;
+                        else
+                            couples(placeInCouples, 1:2) = conditions_mat(placeInMat, 1:2);
+                            couples(placeInCouples+1, 1) = conditions_mat(placeInMat, 2);
+                            couples(placeInCouples+1, 2) = conditions_mat(placeInMat, 1);
+                            placeInCouples = placeInCouples + 2;
+                            rpeatingCouple = false;
+                        end
                     end
                 case 2
                     conditions_mat(placeInMat, 1) = permutedPicNumbers(indexInPermutedPicNumbers);
@@ -697,13 +713,13 @@ end
             end
             Screen('Flip', window);
             sendTrigger(TRIGGERS_SHOWING_PICTURE);
-            WaitSecs(TIME_WAITING_AT_THE_BEGINGING_OF_THE_TRIAL);
-            drawFixationCross(FIXATION_CROSS_ARMS_LEN, FIXATION_CROSS_ARMS_WIDTH, FIXATION_CROSS_COLOR);
-            Screen('Flip', window);
+            WaitSecs(TIME_WAITING_FOR_PICTURES_IN_THE_FIRST_BLOCK);
             while (1)
                 [keyIsDown, secs, keyCode] = KbCheck();
                 switch blockNum
                     case 1
+                        drawFixationCross(FIXATION_CROSS_ARMS_LEN, FIXATION_CROSS_ARMS_WIDTH, FIXATION_CROSS_COLOR);
+                        Screen('Flip', window);
                         if (keyIsDown)
                             trial_end_vbl = secs;
                             pressed_key_code = find(keyCode, 1);
@@ -712,12 +728,18 @@ end
                                 sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
                                 sendTrigger(TRIGGERS_END_TRIAL);
                                 picRank = NaN;
+%                                 DrawFormattedText(window, 'You chose the LEFT candidate',window_center_x-400, window_center_y+40,INEXP_TEXT_COLOR);
+%                                 Screen('Flip', window);
+%                                 WaitSecs(TIME_FOR_THE_CHOICE_TEXT_IN_THE_FIRST_BLOCK);
                                 return;
                             elseif (pressed_key_code == KBOARD_CODE_RIGHT)
                                 subject_response = RIGHT;
                                 sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
                                 sendTrigger(TRIGGERS_END_TRIAL);
                                 picRank = NaN;
+%                                 DrawFormattedText(window, 'You chose the RIGHT candidate',window_center_x+20, window_center_y+40,INEXP_TEXT_COLOR);
+%                                 Screen('Flip', window);
+%                                 WaitSecs(TIME_FOR_THE_CHOICE_TEXT_IN_THE_FIRST_BLOCK);
                                 return;
                             elseif (pressed_key_code == KBOARD_CODE_ESC)
                                 %In case the user pressed escape put NaN values in the return parameters of this
