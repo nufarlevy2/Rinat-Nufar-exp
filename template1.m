@@ -728,18 +728,18 @@ end
                                 sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
                                 sendTrigger(TRIGGERS_END_TRIAL);
                                 picRank = NaN;
-%                                 DrawFormattedText(window, 'You chose the LEFT candidate',window_center_x-400, window_center_y+40,INEXP_TEXT_COLOR);
-%                                 Screen('Flip', window);
-%                                 WaitSecs(TIME_FOR_THE_CHOICE_TEXT_IN_THE_FIRST_BLOCK);
+                                DrawFormattedText(window, 'You chose the LEFT candidate',window_center_x-400, window_center_y+40,INEXP_TEXT_COLOR);
+                                Screen('Flip', window);
+                                WaitSecs(TIME_FOR_THE_CHOICE_TEXT_IN_THE_FIRST_BLOCK);
                                 return;
                             elseif (pressed_key_code == KBOARD_CODE_RIGHT)
                                 subject_response = RIGHT;
                                 sendTrigger(TRIGGERS_PRESSING_KEYBOARD);
                                 sendTrigger(TRIGGERS_END_TRIAL);
                                 picRank = NaN;
-%                                 DrawFormattedText(window, 'You chose the RIGHT candidate',window_center_x+20, window_center_y+40,INEXP_TEXT_COLOR);
-%                                 Screen('Flip', window);
-%                                 WaitSecs(TIME_FOR_THE_CHOICE_TEXT_IN_THE_FIRST_BLOCK);
+                                DrawFormattedText(window, 'You chose the RIGHT candidate',window_center_x+20, window_center_y+40,INEXP_TEXT_COLOR);
+                                Screen('Flip', window);
+                                WaitSecs(TIME_FOR_THE_CHOICE_TEXT_IN_THE_FIRST_BLOCK);
                                 return;
                             elseif (pressed_key_code == KBOARD_CODE_ESC)
                                 %In case the user pressed escape put NaN values in the return parameters of this
